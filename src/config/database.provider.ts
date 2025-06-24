@@ -10,6 +10,7 @@ import { ModulesEntity } from 'src/entities/modules.entity';
 import { TeamUserEntity } from 'src/entities/teamUsers.entity';
 import { OtpEntity } from 'src/entities/otp.entity';
 import { TeamModuleEntity } from 'src/entities/teamModules.entity';
+import { TokenEntity } from 'src/entities/token.entity';
 export const databaseProviders = [
   {
     provide: 'DATA_SOURCE',
@@ -22,7 +23,7 @@ export const databaseProviders = [
         username: configService.get<string>('DB_USER'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
-        entities: [UserEntity,RolesEntity,TeamEntity,ModulesEntity,TeamUserEntity,OtpEntity,TeamModuleEntity],
+        entities: [UserEntity,RolesEntity,TeamEntity,ModulesEntity,TeamUserEntity,OtpEntity,TeamModuleEntity,TokenEntity],
         synchronize: true,
       });
       return dataSource.initialize();

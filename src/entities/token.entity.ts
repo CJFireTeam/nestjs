@@ -1,26 +1,20 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm"
-import { UserEntity } from "./user.entity";
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
 
-@Entity({name: 'token',comment: 'Table for storing roles information'})
+@Entity({ name: 'token', comment: 'Table for storing roles information' })
 export class TokenEntity {
-    @PrimaryGeneratedColumn()
-    id: number
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column({ unique: true })
-    token: string
-    
-    @Column()
-    description: string
+  @Column({ unique: true })
+  token: string;
 
-    @Column()
-    isPrivate: boolean
+  @Column()
+  status: boolean;
 
-    @Column()
-    status: boolean
+  @Column()
+  expirate: Date;
 
-    @Column({default: false})
-    isDefault: boolean
-
-    @OneToMany(() => UserEntity, UserEntity => UserEntity.role)
-    user: UserEntity[];
+  @OneToOne('UserEntity', (user: any) => user.token)
+  @JoinColumn()
+  user: any;
 }

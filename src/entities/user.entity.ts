@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, ManyToMany, JoinTable } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, OneToOne } from "typeorm"
 import { RolesEntity } from "./role.entity"
 import { ITeamEntity, TeamEntity } from "./team.entity"
 import { ITeamUserEntity, TeamUserEntity } from "./teamUsers.entity";
@@ -21,8 +21,8 @@ export interface IUserEntity {
   myTeams: ITeamUserEntity[];
   otps: OtpEntity[];
 }
-@Entity({name: 'users',comment: 'Table for storing user information'})
 
+@Entity({name: 'users',comment: 'Table for storing user information'})
 export class UserEntity implements IUserEntity {
     @PrimaryGeneratedColumn()
     id: number
@@ -31,7 +31,6 @@ export class UserEntity implements IUserEntity {
     email: string
 
     @Column()
-    
     password: string
 
     @Column()
@@ -51,6 +50,7 @@ export class UserEntity implements IUserEntity {
 
     @Column({default: () => 'CURRENT_TIMESTAMP'})
     CreatedAt: Date
+    
     @Column({default: () => 'CURRENT_TIMESTAMP'})
     UpdatedAt: Date
 
@@ -68,4 +68,7 @@ export class UserEntity implements IUserEntity {
 
     @OneToMany('otp','user')
     otps: OtpEntity[];
+
+    @OneToOne('TokenEntity', (token: any) => token.user)
+    token: any;
 }

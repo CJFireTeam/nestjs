@@ -1,4 +1,9 @@
-import { BadRequestException, HttpException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { RegisterAuthDto } from './dto/register-auth.dto';
 import { Auth } from './entities/auth.entity';
 import { EncryptUtil } from 'src/utils/encrypt';
@@ -12,9 +17,9 @@ import { ConfigService } from '@nestjs/config';
 import { ConfirmParamsDto } from './dto/confirm.dto';
 import { LoginAuthDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
+import { TokenEntity } from 'src/entities/token.entity';
 
 @Injectable()
-
 export class AuthService {
   private defaultRole: RolesEntity;
   private readonly encryptUtil: EncryptUtil = new EncryptUtil();
@@ -22,19 +27,25 @@ export class AuthService {
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
-    @Inject('USER_REPOSITORY') private readonly userRepository: Repository<UserEntity>,
-    @Inject('ROLE_REPOSITORY') private readonly roleRepository: Repository<RolesEntity>,
-    @Inject('OTP_REPOSITORY')  private readonly otpRepository: Repository<OtpEntity>,
-    @Inject('TEAM_REPOSITORY') private readonly teamRepository: Repository<TeamEntity>,
-
-    
+    @Inject('USER_REPOSITORY')
+    private readonly userRepository: Repository<UserEntity>,
+    @Inject('ROLE_REPOSITORY')
+    private readonly roleRepository: Repository<RolesEntity>,
+    @Inject('OTP_REPOSITORY')
+    private readonly otpRepository: Repository<OtpEntity>,
+    @Inject('TEAM_REPOSITORY')
+    private readonly teamRepository: Repository<TeamEntity>,
+    @Inject('TOKEN_REPOSITORY')
+    private readonly tokenRepository: Repository<TokenEntity>,
   ) {
     this.getDefaultRole();
   }
 
   private async getDefaultRole(): Promise<RolesEntity | null> {
     if (!this.defaultRole) {
-      const defaultRole = await this.roleRepository.findOne({ where: { isDefault: true } });
+      const defaultRole = await this.roleRepository.findOne({
+        where: { isDefault: true },
+      });
       if (!defaultRole) {
         throw new Error('Default role not found');
       }
@@ -43,15 +54,17 @@ export class AuthService {
     return this.defaultRole;
   }
 
-
   async register(dto: RegisterAuthDto) {
     if (dto.teamUrl) {
-      const url = await this.teamRepository.findOne({ where: { teamUrl: dto.teamUrl } });
+      const url = await this.teamRepository.findOne({
+        where: { teamUrl: dto.teamUrl },
+      });
       if (!url) {
         throw new HttpException('Team not found', 404);
       }
     }
-    if (await this.userRepository.findOne({ where: { email: dto.email } })) throw new BadRequestException();
+    if (await this.userRepository.findOne({ where: { email: dto.email } }))
+      throw new BadRequestException();
     dto.password = await this.encryptUtil.hashPassword(dto.password);
     const user = this.userRepository.create(dto);
     user.role = this.defaultRole;
@@ -59,46 +72,57 @@ export class AuthService {
     const otp = await this.otpRepository.save({
       code: await this.OtpUtil.Generate('numeric'),
       user: userCreated,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
     // DEVICE CONFIGURATION
 
-
-    const link = this.configService.get<string>('BACK_URL') + '/auth/confirm/' + otp.code + '/' + + userCreated.id + '/' + this.configService.get<string>('FRONT_URL') + '?confirmed=true';
+    const link =
+      this.configService.get<string>('BACK_URL') +
+      '/auth/confirm/' +
+      otp.code +
+      '/' +
+      +userCreated.id +
+      '/' +
+      this.configService.get<string>('FRONT_URL') +
+      '?confirmed=true';
 
     // SENDEMAIL
-    return {message: 'User registered successfully',link: link };
+    return { message: 'User registered successfully', link: link };
   }
 
-
-  async confirm(params :ConfirmParamsDto,callback?: string) {
+  async confirm(params: ConfirmParamsDto, callback?: string) {
     const otpFind = await this.otpRepository.findOne({
       where: {
         code: params.otp,
         id: params.id,
         expiresAt: MoreThan(new Date()),
         used: false,
-      }
-    })
+      },
+    });
     if (!otpFind) {
       throw new BadRequestException('Invalid OTP or expired');
     }
     if (otpFind.userId !== Number(params.id)) {
       throw new BadRequestException('Invalid OTP or expired');
     }
-    const user = await this.userRepository.findOne({ where: { id:  params.id} });
+    const user = await this.userRepository.findOne({
+      where: { id: params.id },
+    });
     if (!user) {
       throw new BadRequestException('Invalid OTP or expired');
     }
     user.isActive = true;
     await this.userRepository.save(user);
     this.otpRepository.update(otpFind.id, { used: true });
-    return {message: 'User confirmed successfully', link: callback + '?confirmed=true'};
+    return {
+      message: 'User confirmed successfully',
+      link: callback + '?confirmed=true',
+    };
   }
 
-  async recover(otp:string,email: string,password:string) {
-    const user = await this.userRepository.findOne({ where: { email:  email} });
+  async recover(otp: string, email: string, password: string) {
+    const user = await this.userRepository.findOne({ where: { email: email } });
 
     if (!user) {
       throw new BadRequestException('Invalid OTP or expired');
@@ -111,51 +135,80 @@ export class AuthService {
       await this.otpRepository.save({
         code: newOtp,
         user: user,
-        expiresAt: new Date(Date.now() + 5 * 60 * 1000)
-      })
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      });
 
-      return {message: 'User sendend to recover', otp: newOtp};
+      return { message: 'User sendend to recover', otp: newOtp };
     }
     if (!password) {
       throw new BadRequestException('Password is required');
     }
-      const otpFind = await this.otpRepository.findOne({
+    const otpFind = await this.otpRepository.findOne({
       where: {
         code: otp,
         userId: user.id,
         expiresAt: MoreThan(new Date()),
         used: false,
-      }
-    })
+      },
+    });
     if (!otpFind) {
       throw new BadRequestException('Invalid OTP or expired');
     }
     otpFind.used = true;
     user.IsBloqued = false;
     user.password = await this.encryptUtil.hashPassword(password);
-    this.otpRepository.save(otpFind)
+    this.otpRepository.save(otpFind);
     this.userRepository.save(user);
 
-    return {message: 'recoverded user succefull'};
+    return { message: 'recoverded user succefull' };
   }
 
   async login(dto: LoginAuthDto) {
-    const user = await this.userRepository.findOne({ where: { email:  dto.email} });
+    const user = await this.userRepository.findOne({
+      where: { email: dto.email },
+      relations: ['token'],
+    });
+
     if (!user) {
-      throw new BadRequestException();
+      throw new BadRequestException('Invalid credentials');
     }
-    if (!await this.encryptUtil.comparePasswords(dto.password,user.password)) {
-      throw new BadRequestException();
+
+    if (
+      !(await this.encryptUtil.comparePasswords(dto.password, user.password))
+    ) {
+      throw new BadRequestException('Invalid credentials');
     }
+
     const payload = {
       sub: user.id,
       email: user.email,
       role: user.role.name,
-    }
+    };
+
+    // Generar token usando la configuración de expiración
     const jwt = await this.jwtService.signAsync(payload);
-    return {accessToken: jwt,user: user};
-    // GENERAMOS JWT
-    // GUARDAMOS NUEVO DEVICE
-    // RETORNAMOS JWT Y DATA BASE DE USER
+
+    // DECODIFICAR TOKEN PARA OBTENER FECHA DE EXPIRACIÓN REAL
+    const decodedToken = this.jwtService.decode(jwt) as { exp: number };
+    const expirateDate = new Date(decodedToken.exp * 1000); // Convertir segundos a milisegundos
+
+    if (user.token) {
+      // Actualizar token existente
+      user.token.token = jwt;
+      user.token.expirate = expirateDate; // Usar fecha decodificada
+      user.token.status = true;
+      await this.tokenRepository.save(user.token);
+    } else {
+      // Crear nuevo token con fecha decodificada
+      const tokenEntity = this.tokenRepository.create({
+        token: jwt,
+        status: true,
+        expirate: expirateDate, // Usar fecha decodificada
+        user: user,
+      });
+      await this.tokenRepository.save(tokenEntity);
+    }
+
+    return { accessToken: jwt, user: user };
   }
 }

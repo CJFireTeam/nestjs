@@ -3,6 +3,7 @@ import { UserEntity } from './user.entity';
 import { RolesEntity } from './role.entity';
 import { OtpEntity } from './otp.entity';
 import { TeamEntity } from './team.entity';
+import { TokenEntity } from './token.entity';
 const data_source = 'DATA_SOURCE';
 export const UserProviders = [
   {
@@ -23,6 +24,11 @@ export const UserProviders = [
   {
     provide: 'TEAM_REPOSITORY',
     useFactory: (dataSource: DataSource) => dataSource.getRepository(TeamEntity),
+    inject: [data_source],
+  },
+  {
+    provide: 'TOKEN_REPOSITORY',
+    useFactory: (dataSource: DataSource) => dataSource.getRepository(TokenEntity),
     inject: [data_source],
   },
 ];
