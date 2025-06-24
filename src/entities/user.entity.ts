@@ -1,0 +1,71 @@
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, ManyToMany, JoinTable } from "typeorm"
+import { RolesEntity } from "./role.entity"
+import { ITeamEntity, TeamEntity } from "./team.entity"
+import { ITeamUserEntity, TeamUserEntity } from "./teamUsers.entity";
+import { OtpEntity } from "./otp.entity";
+
+export interface IUserEntity {
+  id: number;
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  isActive: boolean;
+  IsBloqued: boolean;
+  status: boolean;
+  CreatedAt: Date;
+  UpdatedAt: Date;
+  role: RolesEntity;
+  roleId: number;
+  myTeamsOwner: ITeamEntity[];
+  myTeams: ITeamUserEntity[];
+  otps: OtpEntity[];
+}
+@Entity({name: 'users',comment: 'Table for storing user information'})
+
+export class UserEntity implements IUserEntity {
+    @PrimaryGeneratedColumn()
+    id: number
+
+    @Column({ unique: true })
+    email: string
+
+    @Column()
+    
+    password: string
+
+    @Column()
+    firstName: string
+
+    @Column()
+    lastName: string
+
+    @Column({default:false})
+    isActive: boolean
+
+    @Column({default:false})
+    IsBloqued: boolean
+
+    @Column({default:true})
+    status: boolean
+
+    @Column({default: () => 'CURRENT_TIMESTAMP'})
+    CreatedAt: Date
+    @Column({default: () => 'CURRENT_TIMESTAMP'})
+    UpdatedAt: Date
+
+    @ManyToOne(() => RolesEntity, role => role.users, { eager: true })
+    role: RolesEntity;
+
+    @Column()
+    roleId: number;
+
+    @OneToMany('teams','creator')
+    myTeamsOwner: TeamEntity[];
+
+    @OneToMany('teams_users','user')
+    myTeams: ITeamUserEntity[];
+
+    @OneToMany('otp','user')
+    otps: OtpEntity[];
+}
