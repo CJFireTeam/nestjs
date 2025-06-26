@@ -18,6 +18,7 @@ import { ConfirmParamsDto } from './dto/confirm.dto';
 import { LoginAuthDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { TokenEntity } from 'src/entities/token.entity';
+import ms from 'ms';
 
 @Injectable()
 export class AuthService {
@@ -163,52 +164,49 @@ export class AuthService {
     return { message: 'recoverded user succefull' };
   }
 
-  async login(dto: LoginAuthDto) {
+  async login(user: UserEntity) {
+    const payload = { sub: user.id, email: user.email, role: user.role.name };
+    const tokenExist = await this.tokenRepository.findOne({ where: { user: user } });
+    const time = ms(this.configService.get<string>('JWT_EXPIRATION'));
+    const access_token = await this.jwtService.signAsync(payload);
+    // this.tokenRepository.save({
+    //   expirate: new Date(Date.now() + time),
+    //   user: user,
+    //   token: access_token,
+    //   status: true
+    // });
+    await this.tokenRepository.upsert({
+    userId: user.id,
+    token: access_token,
+    expirate: new Date(Date.now() + time),
+    status: true,
+  }, ['userId']);
+    return { message: "Login successful", access_token }
+  }
+  public async validateUser(email: string, password: string) {
     const user = await this.userRepository.findOne({
-      where: { email: dto.email },
-      relations: ['token'],
+      where: { email: email }
     });
 
     if (!user) {
-      throw new BadRequestException('Invalid credentials');
+      return null;
     }
-
-    if (
-      !(await this.encryptUtil.comparePasswords(dto.password, user.password))
-    ) {
-      throw new BadRequestException('Invalid credentials');
+    if (!(await this.encryptUtil.comparePasswords(password, user.password))) {
+      return null;
     }
-
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role.name,
-    };
-
-    // Generar token usando la configuración de expiración
-    const jwt = await this.jwtService.signAsync(payload);
-
-    // DECODIFICAR TOKEN PARA OBTENER FECHA DE EXPIRACIÓN REAL
-    const decodedToken = this.jwtService.decode(jwt) as { exp: number };
-    const expirateDate = new Date(decodedToken.exp * 1000); // Convertir segundos a milisegundos
-
-    if (user.token) {
-      // Actualizar token existente
-      user.token.token = jwt;
-      user.token.expirate = expirateDate; // Usar fecha decodificada
-      user.token.status = true;
-      await this.tokenRepository.save(user.token);
-    } else {
-      // Crear nuevo token con fecha decodificada
-      const tokenEntity = this.tokenRepository.create({
-        token: jwt,
-        status: true,
-        expirate: expirateDate, // Usar fecha decodificada
-        user: user,
-      });
-      await this.tokenRepository.save(tokenEntity);
+    return user;
+  }
+  public async validateToken(token: string,iduser:number) {
+    const tokenFind = await this.tokenRepository.findOne({
+      where: { token: token, status: true,userId:iduser },
+    });
+    if (!tokenFind) {
+      return null;
     }
-
-    return { accessToken: jwt, user: user };
+    return await this.userRepository.findOne({where: { id: iduser }});
+  }
+  // public async validateToken(token) {
+  public async me(user: UserEntity) {
+    return user;
   }
 }

@@ -54,7 +54,7 @@ export class UserEntity implements IUserEntity {
     @Column({default: () => 'CURRENT_TIMESTAMP'})
     UpdatedAt: Date
 
-    @ManyToOne(() => RolesEntity, role => role.users, { eager: true })
+    @ManyToOne(() => RolesEntity, role => role.users)
     role: RolesEntity;
 
     @Column()

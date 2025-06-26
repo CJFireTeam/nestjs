@@ -6,18 +6,44 @@ import enviroment from './config/enviroment';
 import { ConfigurationModule } from './config/config.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
+import { AuthService } from './modules/auth/auth.service';
+import { UserProviders } from './entities/providers';
+import { LocalStrategy } from './strategy/local.strategy';
+import { JwtStrategy } from './strategy/jwt.stategy';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { JwtExpiredFilter } from './filter/jwtExpire.filter';
+import { PassportModule } from '@nestjs/passport';
 @Module({
   imports: [
+    PassportModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        global: true,
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: configService.get<string>('JWT_EXPIRATION'),
+        },
+      }),
+    }),
     ConfigModule.forRoot({
-      isGlobal:true,
-      load:[enviroment],
+      isGlobal: true,
+      load: [enviroment],
       envFilePath: '.env',
     }),
-  ConfigurationModule,
-  AuthModule,
-],
+    ConfigurationModule,
+    AuthModule,
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,
+    AuthService, ...UserProviders, LocalStrategy, JwtStrategy, {
+      provide: APP_INTERCEPTOR,
+      useClass: JwtExpiredFilter,
+    },
+    
+  ],
+  exports: [JwtModule]
 })
 
-export class AppModule {}
+export class AppModule { }

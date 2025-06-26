@@ -1,8 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Inject, ValidationPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Inject, ValidationPipe, Query, UseGuards, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterAuthDto } from './dto/register-auth.dto';
 import { ConfirmParamsDto } from './dto/confirm.dto';
 import { LoginAuthDto } from './dto/login.dto';
+import { LocalGuard } from 'src/guard/local/local.guard';
+import { JwtGuard } from 'src/guard/jwt/jwt.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -32,10 +34,16 @@ export class AuthController {
   ) {
     return this.authService.recover(otp,email,password);
   }
-
+  @UseGuards(LocalGuard)
   @Post('login')
-  login(@Body() dto: LoginAuthDto) {
-    return this.authService.login(dto)
+  login(@Request() req) {
+    return this.authService.login(req.user)
+  }
+
+  @Post('me')
+  @UseGuards(JwtGuard)
+  me(@Request() req) {
+    return this.authService.me(req.user);
   }
 
 }

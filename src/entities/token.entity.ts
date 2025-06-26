@@ -14,7 +14,10 @@ export class TokenEntity {
   @Column()
   expirate: Date;
 
-  @OneToOne('UserEntity', (user: any) => user.token)
-  @JoinColumn()
+  @OneToOne('users','id')
+  @JoinColumn({name: 'userId'})
   user: any;
+
+  @Column({unique: true})
+  userId: number;
 }
