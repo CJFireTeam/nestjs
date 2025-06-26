@@ -5,7 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { RegisterAuthDto } from './dto/register-auth.dto';
-import { Auth } from './entities/auth.entity';
+/* import { Auth } from './entities/auth.entity'; */
 import { EncryptUtil } from 'src/utils/encrypt';
 import { MoreThan, Repository } from 'typeorm';
 import { UserEntity } from 'src/entities/user.entity';
@@ -208,5 +208,25 @@ export class AuthService {
   // public async validateToken(token) {
   public async me(user: UserEntity) {
     return user;
+  }
+
+  async roleChange(currentUser: UserEntity, roleId: number) {
+  // 1. Buscar el nuevo rol
+  const newRole = await this.roleRepository.findOne({
+    where: { id: roleId }
+  });
+
+  if (!newRole) {
+   throw new BadRequestException('Role not found');
+  }
+
+   // 2. Actualizar el rol del usuario actual
+  currentUser.role = newRole;
+  await this.userRepository.save(currentUser);
+
+  return { 
+    message: 'Role successfully updated',
+    newRole: newRole.name
+  };
   }
 }

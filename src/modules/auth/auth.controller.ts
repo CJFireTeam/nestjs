@@ -5,6 +5,7 @@ import { ConfirmParamsDto } from './dto/confirm.dto';
 import { LoginAuthDto } from './dto/login.dto';
 import { LocalGuard } from 'src/guard/local/local.guard';
 import { JwtGuard } from 'src/guard/jwt/jwt.guard';
+import { RoleAuthDto } from './dto/role-auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -44,6 +45,15 @@ export class AuthController {
   @UseGuards(JwtGuard)
   me(@Request() req) {
     return this.authService.me(req.user);
+  }
+
+  @UseGuards(JwtGuard) // JwtGuard para autorización con token
+  @Post('role')
+  roleChange(
+    @Request() req,
+    @Body() dto: RoleAuthDto
+  ) {
+    return this.authService.roleChange(req.user, dto.roleId);
   }
 
 }
