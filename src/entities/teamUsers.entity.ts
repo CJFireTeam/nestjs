@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, PrimaryColumn } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { TeamEntity } from './team.entity';
+import { RolesEntity } from './role.entity';
 export interface ITeamUserEntity {
     user: UserEntity;
     team: TeamEntity;
@@ -17,6 +18,9 @@ export class TeamUserEntity implements ITeamUserEntity {
     @PrimaryColumn()
     teamId: number;
 
+    @PrimaryColumn()
+    roleId: number;
+
     @ManyToOne('users', 'myTeams')
     @JoinColumn({ name: 'userId' })
     user: UserEntity;
@@ -24,6 +28,11 @@ export class TeamUserEntity implements ITeamUserEntity {
     @ManyToOne('teams', 'members')
     @JoinColumn({ name: 'teamId' })
     team: TeamEntity;
+    
+    @ManyToOne('roles', 'teamsUsers')
+    @JoinColumn({ name: 'roleId' })
+    role: RolesEntity;
+
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     joinedAt: Date;
 

@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm"
 import { UserEntity } from "./user.entity";
+import { ITeamUserEntity } from "./teamUsers.entity";
 
 @Entity({name: 'roles',comment: 'Table for storing roles information'})
 export class RolesEntity {
@@ -23,4 +24,7 @@ export class RolesEntity {
 
     @OneToMany(() => UserEntity, UserEntity => UserEntity.role)
     users: UserEntity[];
+
+    @OneToMany('teams_users','role')
+    teamsUsers: ITeamUserEntity[];
 }
