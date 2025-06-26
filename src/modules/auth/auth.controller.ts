@@ -40,7 +40,7 @@ export class AuthController {
     return this.authService.login(req.user)
   }
 
-  @Post('me')
+  @Get('me')
   @UseGuards(JwtGuard)
   me(@Request() req) {
     return this.authService.me(req.user);
