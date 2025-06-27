@@ -13,6 +13,7 @@ import { JwtStrategy } from './strategy/jwt.stategy';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtExpiredFilter } from './filter/jwtExpire.filter';
 import { PassportModule } from '@nestjs/passport';
+import { TeamModule } from './modules/team/team.module';
 @Module({
   imports: [
     PassportModule,
@@ -34,6 +35,7 @@ import { PassportModule } from '@nestjs/passport';
     }),
     ConfigurationModule,
     AuthModule,
+    TeamModule,
   ],
   controllers: [AppController],
   providers: [AppService,
