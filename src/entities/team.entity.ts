@@ -42,7 +42,7 @@ export class TeamEntity implements ITeamEntity {
     @Column({ nullable: true })
     teamUrl: string;
        
-    @ManyToMany('users','myTeams')
+    @ManyToMany('teams_users','teams')
     members: IUserEntity[];
    
     @OneToMany('teams_modules','team')

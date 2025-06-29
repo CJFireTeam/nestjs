@@ -165,7 +165,8 @@ export class AuthService {
   }
 
   async login(user: UserEntity) {
-    const payload = { sub: user.id, email: user.email, role: user.role.name };
+    const role = this.roleRepository.findOne({where:{id: user.roleId},select: {name:true,id:true}});
+    const payload = { sub: user.id, email: user.email, role: role };
     const tokenExist = await this.tokenRepository.findOne({ where: { user: user } });
     const time = ms(this.configService.get<string>('JWT_EXPIRATION'));
     const access_token = await this.jwtService.signAsync(payload);

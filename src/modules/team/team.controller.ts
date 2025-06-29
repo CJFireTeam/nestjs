@@ -11,10 +11,8 @@ export class TeamController {
   @Post()
   @UseGuards(JwtGuard) // Guard para obtener el usuario del token
   create(@Body() createTeamDto: CreateTeamDto, @Request() req) {
-    console.log('Datos recibidos:', createTeamDto); // Para debugging
-    console.log('Usuario:', req.user); // Para debugging
     // Pasamos el usuario autenticado al servicio
-    return this.teamService.create(createTeamDto, req.user);
+    return this.teamService.create(createTeamDto, req.user.me);
   }
 
   @Get()

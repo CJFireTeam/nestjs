@@ -1,34 +1,41 @@
 import { Injectable, Inject, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { CreateTeamDto } from './dto/create-team.dto';
+import { CreateTeamDto, CreateTeamResponseDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { TeamEntity } from 'src/entities/team.entity';
 import { UserEntity } from 'src/entities/user.entity';
+import { TeamUserEntity } from 'src/entities/teamUsers.entity';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class TeamService {
   constructor(
     @Inject('TEAM_REPOSITORY')
     private readonly teamRepository: Repository<TeamEntity>,
+    @Inject('USER_TEAM_REPOSITORY') private readonly teamUserRepository: Repository<TeamUserEntity>
   ) {}
 
   async create(createTeamDto: CreateTeamDto, user: UserEntity) {
     try {
-      // Creamos el equipo asignando el usuario como creador
       const team = this.teamRepository.create({
         ...createTeamDto,
         creator: user,
         creatorId: user.id,
         createdAt: new Date(),
         updatedAt: new Date(),
-        members: [user] // El creador también es miembro del equipo
       });
 
       const savedTeam = await this.teamRepository.save(team);
-      
+      const member = await this.teamUserRepository.save({
+        isActive: true,
+        isPrincipal: false,
+        userId: user.id,
+        teamId: savedTeam.id,
+        roleId: 1
+      });
       return {
         message: 'Team created successfully',
-        team: savedTeam
+        team: plainToInstance(CreateTeamResponseDto,savedTeam,{excludeExtraneousValues: true})
       };
     } catch (error) {
       throw new BadRequestException('Error creating team: ' + error.message);

@@ -1,4 +1,6 @@
+import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsString, IsOptional, IsUrl, MaxLength, MinLength } from 'class-validator';
+import { responseStandart } from 'src/config/responseStandart';
 
 export class CreateTeamDto {
   @IsString({ message: 'El nombre debe ser un texto' })
@@ -10,4 +12,10 @@ export class CreateTeamDto {
   @IsOptional()
   @IsUrl({}, { message: 'La URL del equipo debe ser válida' })
   teamUrl?: string;
+}
+
+
+export class CreateTeamResponseDto extends responseStandart {
+  @Expose()
+  name: string;
 }
