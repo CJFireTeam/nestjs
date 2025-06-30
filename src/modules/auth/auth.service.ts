@@ -19,6 +19,8 @@ import { LoginAuthDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { TokenEntity } from 'src/entities/token.entity';
 import ms from 'ms';
+import { TeamUserEntity } from 'src/entities/teamUsers.entity';
+import { JoinToTeam } from './dto/joinToTeam.dto';
 
 @Injectable()
 export class AuthService {
@@ -38,6 +40,8 @@ export class AuthService {
     private readonly teamRepository: Repository<TeamEntity>,
     @Inject('TOKEN_REPOSITORY')
     private readonly tokenRepository: Repository<TokenEntity>,
+    @Inject('USER_TEAM_REPOSITORY') private readonly teamUserRepository: Repository<TeamUserEntity>,
+    
   ) {
     this.getDefaultRole();
   }
@@ -45,7 +49,7 @@ export class AuthService {
   private async getDefaultRole(): Promise<RolesEntity | null> {
     if (!this.defaultRole) {
       const defaultRole = await this.roleRepository.findOne({
-        where: { isDefault: true },
+        where: { isDefault: true,forUsers:true },
       });
       if (!defaultRole) {
         throw new Error('Default role not found');
@@ -84,12 +88,12 @@ export class AuthService {
       otp.code +
       '/' +
       +userCreated.id +
-      '/' +
+      '?callback?' +
       this.configService.get<string>('FRONT_URL') +
-      '?confirmed=true';
+      '&confirmed=true';
 
     // SENDEMAIL
-    return { message: 'User registered successfully', link: link };
+    return { message: 'User registered successfully' };
   }
 
   async confirm(params: ConfirmParamsDto, callback?: string) {
@@ -118,7 +122,7 @@ export class AuthService {
     this.otpRepository.update(otpFind.id, { used: true });
     return {
       message: 'User confirmed successfully',
-      link: callback + '?confirmed=true',
+      // link: callback + '?confirmed=true',
     };
   }
 
@@ -229,5 +233,31 @@ export class AuthService {
     message: 'Role successfully updated',
     newRole: newRole.name
   };
+  }
+
+
+  async getMyTeams(user: UserEntity) {
+    const teamUsers =  await this.teamUserRepository.find({where:{userId:user.id,isActive:true},relations:{team:true}});
+    console.log(teamUsers);
+    if (teamUsers.length === 0) {
+      throw new BadRequestException('No teams active');
+    }
+    return {
+    message: 'Get my teams succefully',
+    teams: teamUsers.map(tu => tu.team)
+    };
+  }
+
+  async JoinToTeam(dto: JoinToTeam,user:UserEntity) {
+    const teamSearch = await this.teamRepository.findOne({where:{inviteLink:dto.uuid,status:true}});
+    if (!teamSearch) throw new BadRequestException();
+    if (dto.isPrincipal) this.teamUserRepository.update({userId:user.id},{isPrincipal:true});
+    // modificar roles  
+    await this.teamUserRepository.save({teamId:teamSearch.id,userId: user.id,roleId:1,isActive:true,isPrincipal:true});
+
+    return { 
+      message: 'User added succefully',
+      team: teamSearch
+    };
   }
 }

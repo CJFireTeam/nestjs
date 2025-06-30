@@ -41,6 +41,9 @@ export class TeamEntity implements ITeamEntity {
 
     @Column({ nullable: true })
     teamUrl: string;
+
+    @Column()
+    inviteLink: string;
        
     @ManyToMany('teams_users','teams')
     members: IUserEntity[];

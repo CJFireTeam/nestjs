@@ -15,7 +15,11 @@ export class RolesEntity {
 
     @Column()
     isPrivate: boolean
+    @Column()
+    forTeams: boolean;
 
+    @Column()
+    forUsers: boolean;
     @Column()
     status: boolean
 
