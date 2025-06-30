@@ -50,4 +50,10 @@ export class TeamEntity implements ITeamEntity {
    
     @OneToMany('teams_modules','team')
     modules: TeamModuleEntity[];
+
+    @Column({nullable:true})
+    logo: string;
+    
+    @Column({nullable:true})
+    logo64: string;
 }
