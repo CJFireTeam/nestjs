@@ -7,6 +7,7 @@ import { LocalGuard } from 'src/guard/local/local.guard';
 import { JwtGuard } from 'src/guard/jwt/jwt.guard';
 import { RoleAuthDto } from './dto/role-auth.dto';
 import { JoinToTeam } from './dto/joinToTeam.dto';
+import { ChangeTeamDto } from './dto/changeTeam.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -68,4 +69,11 @@ export class AuthController {
   JoinToTeam(@Body() dto: JoinToTeam,@Request() req){
     return this.authService.JoinToTeam(dto,req.user.me)
   };
+  
+  @UseGuards(JwtGuard)
+  @Post('active')
+  ChangeTeam(@Body() dto: ChangeTeamDto,@Request() req){
+    return this.authService.ChangeTeam(dto,req.user.me)
+  };
+
 }

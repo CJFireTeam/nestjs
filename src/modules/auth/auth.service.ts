@@ -21,6 +21,7 @@ import { TokenEntity } from 'src/entities/token.entity';
 import ms from 'ms';
 import { TeamUserEntity } from 'src/entities/teamUsers.entity';
 import { JoinToTeam } from './dto/joinToTeam.dto';
+import { ChangeTeamDto } from './dto/changeTeam.dto';
 
 @Injectable()
 export class AuthService {
@@ -260,4 +261,23 @@ export class AuthService {
       team: teamSearch
     };
   }
+
+async ChangeTeam(dto: ChangeTeamDto,user:UserEntity) {
+    
+    const teamSearch = await this.teamRepository.findOne({where:{inviteLink:dto.uuid,status:true}});
+    if (!teamSearch) throw new BadRequestException();
+    
+    const member = await this.teamUserRepository.findOne({where: {userId:user.id,teamId: teamSearch.id,isActive:true}})
+    if (!member) throw new BadRequestException();
+    if (member && member.isPrincipal) throw new BadRequestException();
+    
+    await this.teamUserRepository.update({userId:user.id,isPrincipal:true,isActive:true},{isPrincipal:false});
+    member.isPrincipal =  true;
+    await this.teamUserRepository.save(member);
+    return { 
+      message: 'User updated succefully',
+      team: teamSearch
+    };
+  }
+
 }
