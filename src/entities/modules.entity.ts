@@ -10,6 +10,7 @@ export interface IModulesEntity {
     isPrivate: boolean;
     status: boolean;
     teams: ITeamModuleEntity[];
+    userModules: any[];
 }
 @Entity({name: 'modules',comment: 'Table for storing modules team information'})
 export class ModulesEntity {
@@ -30,4 +31,7 @@ export class ModulesEntity {
 
     @OneToMany('teams_modules','module')
     teams: TeamModuleEntity[];
+
+    @OneToMany('UserModuleEntity', 'module')
+    userModules: any[];
 }

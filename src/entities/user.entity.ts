@@ -20,6 +20,7 @@ export interface IUserEntity {
   myTeamsOwner: ITeamEntity[];
   myTeams: ITeamUserEntity[];
   otps: OtpEntity[];
+  userModules: any[];
 }
 
 @Entity({name: 'users',comment: 'Table for storing user information'})
@@ -71,4 +72,8 @@ export class UserEntity implements IUserEntity {
 
     @OneToOne('TokenEntity', (token: any) => token.user)
     token: any;
+    
+   //UserModuleEntity por el la entidad de usuario, user por la relación y userModules por la propiedad de la entidad
+   @OneToMany('UserModuleEntity', 'user')
+   userModules: any[];
 }

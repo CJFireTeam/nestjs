@@ -1,7 +1,6 @@
-
 import { DataSource } from 'typeorm';
 import enviroment from './enviroment';
-import { UserEntity } from 'src/entities/user.entity'; 
+import { UserEntity } from 'src/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
 import { Inject } from '@nestjs/common';
 import { RolesEntity } from 'src/entities/role.entity';
@@ -11,6 +10,7 @@ import { TeamUserEntity } from 'src/entities/teamUsers.entity';
 import { OtpEntity } from 'src/entities/otp.entity';
 import { TeamModuleEntity } from 'src/entities/teamModules.entity';
 import { TokenEntity } from 'src/entities/token.entity';
+import { UserModuleEntity } from 'src/entities/userModules.entity';
 export const databaseProviders = [
   {
     provide: 'DATA_SOURCE',
@@ -23,7 +23,17 @@ export const databaseProviders = [
         username: configService.get<string>('DB_USER'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
-        entities: [UserEntity,RolesEntity,TeamEntity,ModulesEntity,TeamUserEntity,OtpEntity,TeamModuleEntity,TokenEntity],
+        entities: [
+          UserEntity,
+          RolesEntity,
+          TeamEntity,
+          ModulesEntity,
+          TeamUserEntity,
+          OtpEntity,
+          TeamModuleEntity,
+          TokenEntity,
+          UserModuleEntity
+        ],
         synchronize: true,
       });
       return dataSource.initialize();

@@ -31,4 +31,7 @@ export class RolesEntity {
 
     @OneToMany('teams_users','role')
     teamsUsers: ITeamUserEntity[];
+
+   @OneToMany('UserModuleEntity', 'role')
+    userModules: any[];
 }
