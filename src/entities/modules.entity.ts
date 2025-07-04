@@ -7,13 +7,14 @@ export interface IModulesEntity {
     id: number;
     name: string;
     description: string;
+    forTeams: boolean;
+    forUsers: boolean;
+    isPremium: boolean;
     isPrivate: boolean;
     status: boolean;
-    teams: ITeamModuleEntity[];
-    userModules: any[];
 }
 @Entity({name: 'modules',comment: 'Table for storing modules team information'})
-export class ModulesEntity {
+export class ModulesEntity implements IModulesEntity {
     @PrimaryGeneratedColumn()
     id: number
 
@@ -27,8 +28,15 @@ export class ModulesEntity {
     isPrivate: boolean
 
     @Column()
-    status: boolean
+    forTeams: boolean;
 
+    @Column()
+    forUsers: boolean;
+
+    @Column()
+    isPremium:boolean;
+    @Column()
+    status: boolean
     @OneToMany('teams_modules','module')
     teams: TeamModuleEntity[];
 
