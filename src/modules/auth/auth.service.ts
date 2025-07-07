@@ -22,6 +22,7 @@ import ms from 'ms';
 import { TeamUserEntity } from 'src/entities/teamUsers.entity';
 import { JoinToTeam } from './dto/joinToTeam.dto';
 import { ChangeTeamDto } from './dto/changeTeam.dto';
+import { IModulesEntity, ModulesEntity } from 'src/entities/modules.entity';
 
 @Injectable()
 export class AuthService {
@@ -42,7 +43,7 @@ export class AuthService {
     @Inject('TOKEN_REPOSITORY')
     private readonly tokenRepository: Repository<TokenEntity>,
     @Inject('USER_TEAM_REPOSITORY') private readonly teamUserRepository: Repository<TeamUserEntity>,
-    
+    @Inject('MODULE_REPOSITORY') private readonly moduleRepository: Repository<ModulesEntity>,
   ) {
     this.getDefaultRole();
   }
@@ -213,7 +214,14 @@ export class AuthService {
   }
   // public async validateToken(token) {
   public async me(user: UserEntity) {
-    return user;
+    // extend for premium modules
+    const modules: String[] = [];
+    const modulesQuery = await this.moduleRepository.find({where: {forUsers:true,isPrivate:false,isPremium:false},select: {name:true}});
+
+    modulesQuery.forEach(element => {
+      modules.push(element.name);
+    });
+    return {user,modules};
   }
 
   async roleChange(currentUser: UserEntity, roleId: number) {
