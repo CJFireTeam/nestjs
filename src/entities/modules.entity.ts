@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany } from "t
 import { UserEntity } from "./user.entity";
 import { ITeamEntity } from "./team.entity";
 import { ITeamModuleEntity, TeamModuleEntity } from "./teamModules.entity";
+import { UserModuleEntity } from "./userModules.entity";
 
 export interface IModulesEntity {
     id: number;
@@ -36,10 +37,14 @@ export class ModulesEntity implements IModulesEntity {
     @Column()
     isPremium:boolean;
     @Column()
-    status: boolean
+    status: boolean;
+
+    @Column({nullable:true})
+    icon: string;
+    
     @OneToMany('teams_modules','module')
     teams: TeamModuleEntity[];
 
     @OneToMany('UserModuleEntity', 'module')
-    userModules: any[];
+    userModules: UserModuleEntity[];
 }

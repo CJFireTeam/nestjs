@@ -48,7 +48,16 @@ export class AuthController {
   me(@Request() req) {
     return this.authService.me(req.user);
   }
-
+  @Get('me/mymodules')
+  @UseGuards(JwtGuard)
+  getMyModules(@Request() req) {
+    return this.authService.myModules(req.user);
+  }
+  @Get('me/modules')
+  @UseGuards(JwtGuard)
+  getModules(@Request() req) {
+    return this.authService.Modules(req.user);
+  }
   @UseGuards(JwtGuard) // JwtGuard para autorización con token
   @Post('role')
   roleChange(

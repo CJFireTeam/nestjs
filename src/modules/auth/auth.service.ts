@@ -23,6 +23,7 @@ import { TeamUserEntity } from 'src/entities/teamUsers.entity';
 import { JoinToTeam } from './dto/joinToTeam.dto';
 import { ChangeTeamDto } from './dto/changeTeam.dto';
 import { IModulesEntity, ModulesEntity } from 'src/entities/modules.entity';
+import { UserModuleEntity } from 'src/entities/userModules.entity';
 
 @Injectable()
 export class AuthService {
@@ -44,6 +45,7 @@ export class AuthService {
     private readonly tokenRepository: Repository<TokenEntity>,
     @Inject('USER_TEAM_REPOSITORY') private readonly teamUserRepository: Repository<TeamUserEntity>,
     @Inject('MODULE_REPOSITORY') private readonly moduleRepository: Repository<ModulesEntity>,
+    @Inject('MODULE_USER_REPOSITORY') private readonly userModuleRepository: Repository<UserModuleEntity>,
   ) {
     this.getDefaultRole();
   }
@@ -223,7 +225,26 @@ export class AuthService {
     });
     return {user,modules};
   }
+    public async Modules(user: UserEntity) {
+    // extend for premium modules
+    const modules: String[] = [];
+    const modulesQuery = await this.moduleRepository.find({where: {forUsers:true,isPrivate:false,isPremium:false},select: {name:true}});
 
+    modulesQuery.forEach(element => {
+      modules.push(element.name);
+    });
+    return modules;
+  }
+  
+  public async myModules(user: UserEntity) {
+    // extend for premium modules
+    const modules: String[] = [];
+    const moduleQuery = await this.userModuleRepository.find({where: {userId: user.id},relations:{module:true}});
+    moduleQuery.forEach(element => {
+      modules.push(element.module.name);
+    });
+    return modules;
+  }
   async roleChange(currentUser: UserEntity, roleId: number) {
   // 1. Buscar el nuevo rol
   const newRole = await this.roleRepository.findOne({
