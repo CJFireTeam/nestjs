@@ -217,18 +217,18 @@ export class AuthService {
   // public async validateToken(token) {
   public async me(user: UserEntity) {
     // extend for premium modules
-    const modules: String[] = [];
-    const modulesQuery = await this.moduleRepository.find({where: {forUsers:true,isPrivate:false,isPremium:false},select: {name:true}});
+    const modules: any[] = [];
+    const modulesQuery = await this.moduleRepository.find({where: {forUsers:true,isPrivate:false,isPremium:false},select: {name:true,}});
 
     modulesQuery.forEach(element => {
       modules.push(element.name);
     });
     return {user,modules};
   }
-    public async Modules(user: UserEntity) {
+    public async Modules() {
     // extend for premium modules
-    const modules: String[] = [];
-    const modulesQuery = await this.moduleRepository.find({where: {forUsers:true,isPrivate:false,isPremium:false},select: {name:true}});
+    const modules: any[] = [];
+    const modulesQuery = await this.moduleRepository.find({where: {forUsers:true,isPrivate:false,isPremium:false},select: {name:true,id:true}});
 
     modulesQuery.forEach(element => {
       modules.push(element.name);
