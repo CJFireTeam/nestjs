@@ -24,7 +24,10 @@ import { JoinToTeam } from './dto/joinToTeam.dto';
 import { ChangeTeamDto } from './dto/changeTeam.dto';
 import { IModulesEntity, ModulesEntity } from 'src/entities/modules.entity';
 import { UserModuleEntity } from 'src/entities/userModules.entity';
-
+export interface moduleOutputI {
+  name: string
+  icon: string;
+}
 @Injectable()
 export class AuthService {
   private defaultRole: RolesEntity;
@@ -227,21 +230,21 @@ export class AuthService {
   }
     public async Modules() {
     // extend for premium modules
-    const modules: any[] = [];
-    const modulesQuery = await this.moduleRepository.find({where: {forUsers:true,isPrivate:false,isPremium:false},select: {name:true,id:true}});
+    const modules: moduleOutputI[] = [];
+    const modulesQuery = await this.moduleRepository.find({where: {forUsers:true,isPrivate:false,isPremium:false}});
 
     modulesQuery.forEach(element => {
-      modules.push(element.name);
+      modules.push({name: element.name, icon: element.icon});
     });
     return modules;
   }
   
   public async myModules(user: UserEntity) {
     // extend for premium modules
-    const modules: String[] = [];
+    const modules: moduleOutputI[] = [];
     const moduleQuery = await this.userModuleRepository.find({where: {userId: user.id},relations:{module:true}});
     moduleQuery.forEach(element => {
-      modules.push(element.module.name);
+      modules.push({name:element.module.name,icon: element.module.icon});
     });
     return modules;
   }
