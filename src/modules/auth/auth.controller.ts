@@ -58,11 +58,11 @@ export class AuthController {
   @UseGuards(JwtGuard)
   me(@Request() req, @Query('modules') modules?: string) {
     if (!modules) {
-      return this.authService.me(req.user);
+      return this.authService.me(req.user.me);
     }
 
     if (modules && modules === 'my') {
-      return this.authService.myModules(req.user);
+      return this.authService.myModules(req.user.me);
     }
 
     if( modules && modules === 'all') {

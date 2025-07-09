@@ -219,24 +219,11 @@ export class AuthService {
   }
   // public async validateToken(token) {
   public async me(user: UserEntity) {
-    // extend for premium modules
-    const modules: any[] = [];
-    const modulesQuery = await this.moduleRepository.find({where: {forUsers:true,isPrivate:false,isPremium:false},select: {name:true,}});
-
-    modulesQuery.forEach(element => {
-      modules.push(element.name);
-    });
-    return {user,modules};
+    return user;
   }
     public async Modules() {
     // extend for premium modules
-    const modules: moduleOutputI[] = [];
-    const modulesQuery = await this.moduleRepository.find({where: {forUsers:true,isPrivate:false,isPremium:false}});
-
-    modulesQuery.forEach(element => {
-      modules.push({name: element.name, icon: element.icon});
-    });
-    return modules;
+    return await this.moduleRepository.find({where: {forUsers:true,isPrivate:false,isPremium:false},select: {name:true,icon:true}});
   }
   
   public async myModules(user: UserEntity) {
