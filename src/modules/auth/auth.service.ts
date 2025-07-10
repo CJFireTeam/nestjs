@@ -257,16 +257,17 @@ export class AuthService {
 
 
   async getMyTeams(user: UserEntity) {
-    const teamUsers =  await this.teamUserRepository.find({where:{userId:user.id,isActive:true},relations:{team:true}});
-    console.log(teamUsers);
-    if (teamUsers.length === 0) {
-      throw new BadRequestException('No teams active');
-    }
-    return {
-    message: 'Get my teams succefully',
-    teams: teamUsers.map(tu => tu.team)
-    };
-  }
+  const myTeams : any[] = [];
+  const teamUsers = await this.teamUserRepository.find({
+    where: { userId: user.id, isActive: true },
+    relations: { team: true }
+  });
+
+   teamUsers.map(tu => 
+    myTeams.push(tu.team) || []) 
+
+  return myTeams
+}
 
   async JoinToTeam(dto: JoinToTeam,user:UserEntity) {
     const teamSearch = await this.teamRepository.findOne({where:{inviteLink:dto.uuid,status:true}});

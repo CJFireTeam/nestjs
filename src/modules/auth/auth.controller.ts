@@ -65,12 +65,11 @@ export class AuthController {
       return this.authService.myModules(req.user.me);
     }
 
-    if( modules && modules === 'all') {
+    if (modules && modules === 'all') {
       return this.authService.Modules();
     }
-
-
   }
+
   /* @Get('me/mymodules')
   @UseGuards(JwtGuard)
   getMyModules(@Request() req) {
@@ -81,11 +80,13 @@ export class AuthController {
   getModules(@Request() req) {
     return this.authService.Modules();
   } */
+
   @UseGuards(JwtGuard) // JwtGuard para autorización con token
   @Post('role')
   roleChange(@Request() req, @Body() dto: RoleAuthDto) {
     return this.authService.roleChange(req.user.me, dto.roleId);
   }
+  
   @UseGuards(JwtGuard) // JwtGuard para autorización con token
   @Get('teams')
   getMyTeams(@Request() req) {
