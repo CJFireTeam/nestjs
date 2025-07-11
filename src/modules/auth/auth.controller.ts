@@ -11,6 +11,7 @@ import {
   Query,
   UseGuards,
   Request,
+  Put,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterAuthDto } from './dto/register-auth.dto';
@@ -86,7 +87,7 @@ export class AuthController {
   roleChange(@Request() req, @Body() dto: RoleAuthDto) {
     return this.authService.roleChange(req.user.me, dto.roleId);
   }
-  
+
   @UseGuards(JwtGuard) // JwtGuard para autorización con token
   @Get('teams')
   getMyTeams(@Request() req) {
@@ -103,5 +104,11 @@ export class AuthController {
   @Post('active')
   ChangeTeam(@Body() dto: ChangeTeamDto, @Request() req) {
     return this.authService.ChangeTeam(dto, req.user.me);
+  }
+
+  @UseGuards(JwtGuard)
+  @Delete('logout')
+  logout(@Body('token') token: string, @Request() req) {
+    return this.authService.logout(token, req.user.me);
   }
 }

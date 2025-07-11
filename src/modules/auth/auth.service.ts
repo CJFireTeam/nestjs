@@ -7,7 +7,7 @@ import {
 import { RegisterAuthDto } from './dto/register-auth.dto';
 /* import { Auth } from './entities/auth.entity'; */
 import { EncryptUtil } from 'src/utils/encrypt';
-import { MoreThan, Repository } from 'typeorm';
+import { IsNull, MoreThan, Repository } from 'typeorm';
 import { UserEntity } from 'src/entities/user.entity';
 import { RolesEntity } from 'src/entities/role.entity';
 import { OtpEntity } from 'src/entities/otp.entity';
@@ -25,7 +25,7 @@ import { ChangeTeamDto } from './dto/changeTeam.dto';
 import { IModulesEntity, ModulesEntity } from 'src/entities/modules.entity';
 import { UserModuleEntity } from 'src/entities/userModules.entity';
 export interface moduleOutputI {
-  name: string
+  name: string;
   icon: string;
 }
 @Injectable()
@@ -46,9 +46,12 @@ export class AuthService {
     private readonly teamRepository: Repository<TeamEntity>,
     @Inject('TOKEN_REPOSITORY')
     private readonly tokenRepository: Repository<TokenEntity>,
-    @Inject('USER_TEAM_REPOSITORY') private readonly teamUserRepository: Repository<TeamUserEntity>,
-    @Inject('MODULE_REPOSITORY') private readonly moduleRepository: Repository<ModulesEntity>,
-    @Inject('MODULE_USER_REPOSITORY') private readonly userModuleRepository: Repository<UserModuleEntity>,
+    @Inject('USER_TEAM_REPOSITORY')
+    private readonly teamUserRepository: Repository<TeamUserEntity>,
+    @Inject('MODULE_REPOSITORY')
+    private readonly moduleRepository: Repository<ModulesEntity>,
+    @Inject('MODULE_USER_REPOSITORY')
+    private readonly userModuleRepository: Repository<UserModuleEntity>,
   ) {
     this.getDefaultRole();
   }
@@ -56,7 +59,7 @@ export class AuthService {
   private async getDefaultRole(): Promise<RolesEntity | null> {
     if (!this.defaultRole) {
       const defaultRole = await this.roleRepository.findOne({
-        where: { isDefault: true,forUsers:true },
+        where: { isDefault: true, forUsers: true },
       });
       if (!defaultRole) {
         throw new Error('Default role not found');
@@ -176,9 +179,14 @@ export class AuthService {
   }
 
   async login(user: UserEntity) {
-    const role = this.roleRepository.findOne({where:{id: user.roleId},select: {name:true,id:true}});
+    const role = this.roleRepository.findOne({
+      where: { id: user.roleId },
+      select: { name: true, id: true },
+    });
     const payload = { sub: user.id, email: user.email, role: role };
-    const tokenExist = await this.tokenRepository.findOne({ where: { user: user } });
+    const tokenExist = await this.tokenRepository.findOne({
+      where: { user: user },
+    });
     const time = ms(this.configService.get<string>('JWT_EXPIRATION'));
     const access_token = await this.jwtService.signAsync(payload);
     // this.tokenRepository.save({
@@ -187,17 +195,20 @@ export class AuthService {
     //   token: access_token,
     //   status: true
     // });
-    await this.tokenRepository.upsert({
-    userId: user.id,
-    token: access_token,
-    expirate: new Date(Date.now() + time),
-    status: true,
-  }, ['userId']);
-    return { message: "Login successful", access_token }
+    await this.tokenRepository.upsert(
+      {
+        userId: user.id,
+        token: access_token,
+        expirate: new Date(Date.now() + time),
+        status: true,
+      },
+      ['userId'],
+    );
+    return { message: 'Login successful', access_token };
   }
   public async validateUser(email: string, password: string) {
     const user = await this.userRepository.findOne({
-      where: { email: email }
+      where: { email: email },
     });
 
     if (!user) {
@@ -208,96 +219,143 @@ export class AuthService {
     }
     return user;
   }
-  public async validateToken(token: string,iduser:number) {
+  public async validateToken(token: string, iduser: number) {
     const tokenFind = await this.tokenRepository.findOne({
-      where: { token: token, status: true,userId:iduser },
+      where: { token: token, status: true, userId: iduser },
     });
     if (!tokenFind) {
       return null;
     }
-    return await this.userRepository.findOne({where: { id: iduser }});
+    return await this.userRepository.findOne({ where: { id: iduser } });
   }
   // public async validateToken(token) {
   public async me(user: UserEntity) {
     return user;
   }
-    public async Modules() {
+  public async Modules() {
     // extend for premium modules
-    return await this.moduleRepository.find({where: {forUsers:true,isPrivate:false,isPremium:false},select: {name:true,icon:true}});
+    return await this.moduleRepository.find({
+      where: { forUsers: true, isPrivate: false, isPremium: false },
+      select: { name: true, icon: true },
+    });
   }
-  
+
   public async myModules(user: UserEntity) {
     // extend for premium modules
     const modules: moduleOutputI[] = [];
-    const moduleQuery = await this.userModuleRepository.find({where: {userId: user.id},relations:{module:true}});
-    moduleQuery.forEach(element => {
-      modules.push({name:element.module.name,icon: element.module.icon});
+    const moduleQuery = await this.userModuleRepository.find({
+      where: { userId: user.id },
+      relations: { module: true },
+    });
+    moduleQuery.forEach((element) => {
+      modules.push({ name: element.module.name, icon: element.module.icon });
     });
     return modules;
   }
   async roleChange(currentUser: UserEntity, roleId: number) {
-  // 1. Buscar el nuevo rol
-  const newRole = await this.roleRepository.findOne({
-    where: { id: roleId }
-  });
+    // 1. Buscar el nuevo rol
+    const newRole = await this.roleRepository.findOne({
+      where: { id: roleId },
+    });
 
-  if (!newRole) {
-   throw new BadRequestException('Role not found');
+    if (!newRole) {
+      throw new BadRequestException('Role not found');
+    }
+
+    // 2. Actualizar el rol del usuario actual
+    currentUser.role = newRole;
+    await this.userRepository.save(currentUser);
+
+    return {
+      message: 'Role successfully updated',
+      newRole: newRole.name,
+    };
   }
-
-   // 2. Actualizar el rol del usuario actual
-  currentUser.role = newRole;
-  await this.userRepository.save(currentUser);
-
-  return { 
-    message: 'Role successfully updated',
-    newRole: newRole.name
-  };
-  }
-
 
   async getMyTeams(user: UserEntity) {
-  const myTeams : any[] = [];
-  const teamUsers = await this.teamUserRepository.find({
-    where: { userId: user.id, isActive: true },
-    relations: { team: true }
-  });
+    const myTeams: any[] = [];
+    const teamUsers = await this.teamUserRepository.find({
+      where: { userId: user.id, isActive: true },
+      relations: { team: true },
+    });
 
-   teamUsers.map(tu => 
-    myTeams.push(tu.team) || []) 
+    teamUsers.map((tu) => myTeams.push(tu.team) || []);
 
-  return myTeams
-}
+    return myTeams;
+  }
 
-  async JoinToTeam(dto: JoinToTeam,user:UserEntity) {
-    const teamSearch = await this.teamRepository.findOne({where:{inviteLink:dto.uuid,status:true}});
+  async JoinToTeam(dto: JoinToTeam, user: UserEntity) {
+    const teamSearch = await this.teamRepository.findOne({
+      where: { inviteLink: dto.uuid, status: true },
+    });
     if (!teamSearch) throw new BadRequestException();
-    if (dto.isPrincipal) this.teamUserRepository.update({userId:user.id},{isPrincipal:true});
-    // modificar roles  
-    await this.teamUserRepository.save({teamId:teamSearch.id,userId: user.id,roleId:1,isActive:true,isPrincipal:true});
+    if (dto.isPrincipal)
+      this.teamUserRepository.update(
+        { userId: user.id },
+        { isPrincipal: true },
+      );
+    // modificar roles
+    await this.teamUserRepository.save({
+      teamId: teamSearch.id,
+      userId: user.id,
+      roleId: 1,
+      isActive: true,
+      isPrincipal: true,
+    });
 
-    return { 
+    return {
       message: 'User added succefully',
-      team: teamSearch
+      team: teamSearch,
     };
   }
 
-async ChangeTeam(dto: ChangeTeamDto,user:UserEntity) {
-    
-    const teamSearch = await this.teamRepository.findOne({where:{inviteLink:dto.uuid,status:true}});
+  async ChangeTeam(dto: ChangeTeamDto, user: UserEntity) {
+    const teamSearch = await this.teamRepository.findOne({
+      where: { inviteLink: dto.uuid, status: true },
+    });
     if (!teamSearch) throw new BadRequestException();
-    
-    const member = await this.teamUserRepository.findOne({where: {userId:user.id,teamId: teamSearch.id,isActive:true}})
+
+    const member = await this.teamUserRepository.findOne({
+      where: { userId: user.id, teamId: teamSearch.id, isActive: true },
+    });
     if (!member) throw new BadRequestException();
     if (member && member.isPrincipal) throw new BadRequestException();
-    
-    await this.teamUserRepository.update({userId:user.id,isPrincipal:true,isActive:true},{isPrincipal:false});
-    member.isPrincipal =  true;
+
+    await this.teamUserRepository.update(
+      { userId: user.id, isPrincipal: true, isActive: true },
+      { isPrincipal: false },
+    );
+    member.isPrincipal = true;
     await this.teamUserRepository.save(member);
-    return { 
+    return {
       message: 'User updated succefully',
-      team: teamSearch
+      team: teamSearch,
     };
   }
 
+  async logout(token: string,user: UserEntity, ) {
+    // 1) validaciones básicas
+    if (!token) {
+      throw new BadRequestException('No token provided to invalidate');
+    }
+
+    // 2) buscar el registro activo para este userId + token
+    const entry = await this.tokenRepository.findOne({
+      where: {
+        token,
+        userId: user.id,
+        status: true,
+        expirate: MoreThan(new Date()),
+      },
+    });
+
+    if (!entry) {
+      throw new BadRequestException('Token not found or already invalidated');
+    }
+
+    // 3) actualizar status
+    await this.tokenRepository.update(entry.id, { status: false });
+
+    return { message: 'Successful logout' };
+  }
 }
