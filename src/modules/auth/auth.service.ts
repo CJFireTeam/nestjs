@@ -279,7 +279,7 @@ export class AuthService {
       relations: { team: true },
     });
 
-    teamUsers.map((tu) => myTeams.push(tu.team) || []);
+    teamUsers.map((tu) => myTeams.push({...tu.team, isPrincipal: tu.isPrincipal}) || []);
 
     return myTeams;
   }
