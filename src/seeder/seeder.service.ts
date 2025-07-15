@@ -23,6 +23,7 @@ export class SeederService {
         const rolesUser: IRolesEntity[] = [
             {name:"free",description:"All users",forTeams:false,forUsers:true,isDefault:true,id:1,isPrivate:false,status:true,},
             {name:"premium",description:"All users",forTeams:false,forUsers:true,isDefault:true,id:2,isPrivate:false,status:true},
+            {name: "Owner", description: "Team owner",forTeams:true,forUsers:false,isDefault:false,id:3,isPrivate:false,status:true}
         ];
 
         rolesUser.forEach( async element => {
@@ -51,6 +52,26 @@ export class SeederService {
                 description: "Cotizaciones module",
                 forTeams: false,
                 forUsers: true,
+                isPrivate: false,
+                status: true,
+                isPremium: false,
+            },
+            {
+                id: 2,
+                name: "Caja",
+                description: "Caja module",
+                forTeams: true,
+                forUsers: false,
+                isPrivate: false,
+                status: true,
+                isPremium: false,
+            },
+            {
+                id: 3,
+                name: "Inventario",
+                description: "Inventario module",
+                forTeams: true,
+                forUsers: false,
                 isPrivate: false,
                 status: true,
                 isPremium: false,

@@ -94,6 +94,12 @@ export class AuthController {
     return this.authService.getMyTeams(req.user.me);
   }
 
+  @UseGuards(JwtGuard) // JwtGuard para autorización con token
+  @Get('teams/modules')
+  getMyTeamsModules(@Request() req) {
+    return this.authService.getMyTeamsModules(req.user.me);
+  }
+
   @UseGuards(JwtGuard)
   @Post('join')
   JoinToTeam(@Body() dto: JoinToTeam, @Request() req) {

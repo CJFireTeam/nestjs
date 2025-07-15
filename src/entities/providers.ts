@@ -7,6 +7,7 @@ import { TokenEntity } from './token.entity';
 import { TeamUserEntity } from './teamUsers.entity';
 import { ModulesEntity } from './modules.entity';
 import { UserModuleEntity } from './userModules.entity';
+import { TeamModuleEntity } from './teamModules.entity';
 const data_source = 'DATA_SOURCE';
 export const UserProviders = [
   {
@@ -47,6 +48,11 @@ export const UserProviders = [
   {
     provide: 'MODULE_USER_REPOSITORY',
     useFactory: (dataSource: DataSource) => dataSource.getRepository(UserModuleEntity),
+    inject: [data_source],
+  },
+    {
+    provide: 'TEAM_MODULES_REPOSITORY',
+    useFactory: (dataSource: DataSource) => dataSource.getRepository(TeamModuleEntity),
     inject: [data_source],
   },
 ];

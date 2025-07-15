@@ -24,6 +24,7 @@ import { JoinToTeam } from './dto/joinToTeam.dto';
 import { ChangeTeamDto } from './dto/changeTeam.dto';
 import { IModulesEntity, ModulesEntity } from 'src/entities/modules.entity';
 import { UserModuleEntity } from 'src/entities/userModules.entity';
+import { TeamModuleEntity } from 'src/entities/teamModules.entity';
 export interface moduleOutputI {
   name: string;
   icon: string;
@@ -52,6 +53,7 @@ export class AuthService {
     private readonly moduleRepository: Repository<ModulesEntity>,
     @Inject('MODULE_USER_REPOSITORY')
     private readonly userModuleRepository: Repository<UserModuleEntity>,
+    @Inject('TEAM_MODULES_REPOSITORY') private readonly teamModules: Repository<TeamModuleEntity>
   ) {
     this.getDefaultRole();
   }
@@ -276,14 +278,20 @@ export class AuthService {
     const myTeams: any[] = [];
     const teamUsers = await this.teamUserRepository.find({
       where: { userId: user.id, isActive: true },
-      relations: { team: true },
+      relations: { team: true,role:true },
     });
-
-    teamUsers.map((tu) => myTeams.push({...tu.team, isPrincipal: tu.isPrincipal}) || []);
+    teamUsers.map((tu) => myTeams.push({...tu.team, isPrincipal: tu.isPrincipal,role:tu.role.name}) || []);
 
     return myTeams;
   }
-
+  async getMyTeamsModules(user:UserEntity) {
+      const teamUsers = await this.teamUserRepository.findOne({
+        where: { userId: user.id, isActive: true,isPrincipal: true },
+        relations: { team: true },
+    });
+    if (!teamUsers) throw new BadRequestException('Principal no encontrada');
+    return (await this.teamModules.find({where: {teamId:teamUsers.teamId},relations:{module:true},select: {module:true}})).map(e => e.module)
+  }
   async JoinToTeam(dto: JoinToTeam, user: UserEntity) {
     const teamSearch = await this.teamRepository.findOne({
       where: { inviteLink: dto.uuid, status: true },
