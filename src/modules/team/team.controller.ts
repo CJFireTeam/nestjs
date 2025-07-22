@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Query, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+  Query,
+  BadRequestException,
+} from '@nestjs/common';
 import { TeamService } from './team.service';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
@@ -17,10 +29,12 @@ export class TeamController {
   }
 
   @Get()
-  @UseGuards(JwtGuard,TeamGuard)
+  @UseGuards(JwtGuard, TeamGuard)
   getMembers(
-    @Request() req)
-    {
-      return this.teamService.getMyMembers(req.user.me,req.team);
-    }
+    @Request() req,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.teamService.getMyMembers(req.user.me, req.team, page, limit);
+  }
 }

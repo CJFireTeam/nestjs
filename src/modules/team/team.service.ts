@@ -8,6 +8,7 @@ import { TeamUserEntity } from 'src/entities/teamUsers.entity';
 import { plainToInstance } from 'class-transformer';
 import { JwtService } from '@nestjs/jwt';
 import { EncryptUtil } from 'src/utils/encrypt';
+import { PaginationUtil } from 'src/utils/pagination.util';
 
 @Injectable()
 export class TeamService {
@@ -53,18 +54,30 @@ export class TeamService {
   }
 
 
-  async   getMyMembers(user:UserEntity,team:TeamEntity) {
-    const members =  await this.teamUserRepository.find({where:
-      {
-        teamId:team.id,
-        userId:Not(user.id)
-      },relations:{user:true}
-    })
+  async getMyMembers(user: UserEntity, team: TeamEntity, page: number = 1, limit: number = 10) {
+    try {
+      // Usar tu util de paginación existente
+      const paginatedResult = await PaginationUtil.paginate(
+        this.teamUserRepository,
+        {
+          where: {
+            teamId: team.id,
+            userId: Not(user.id)
+          },
+          relations: { user: true }
+        },
+        { page, limit }
+      );
 
       return {
-        message: 'members getted successfully',
-        members: members
+        message: 'Members retrieved successfully',
+        members: paginatedResult.data,
+        meta: paginatedResult.meta
       };
+      
+    } catch (error) {
+      throw new BadRequestException('Error getting members: ' + error.message);
+    }
   }
 
 
