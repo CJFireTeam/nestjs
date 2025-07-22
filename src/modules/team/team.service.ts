@@ -9,6 +9,7 @@ import { plainToInstance } from 'class-transformer';
 import { JwtService } from '@nestjs/jwt';
 import { EncryptUtil } from 'src/utils/encrypt';
 import { PaginationUtil } from 'src/utils/pagination.util';
+import { meRespondeRole, meResponseDto } from '../auth/dto/meResponse.dto';
 
 @Injectable()
 export class TeamService {
@@ -16,7 +17,8 @@ export class TeamService {
   constructor(
     @Inject('TEAM_REPOSITORY')
     private readonly teamRepository: Repository<TeamEntity>,
-    @Inject('USER_TEAM_REPOSITORY') private readonly teamUserRepository: Repository<TeamUserEntity>
+    @Inject('USER_TEAM_REPOSITORY') private readonly teamUserRepository: Repository<TeamUserEntity>,
+    @Inject('USER_REPOSITORY') private readonly userRepository: Repository<UserEntity>,
   ) {}
 
   async create(createTeamDto: CreateTeamDto, user: UserEntity) {
@@ -56,22 +58,20 @@ export class TeamService {
 
   async getMyMembers(user: UserEntity, team: TeamEntity, page: number = 1, limit: number = 10) {
     try {
+      const myTeams: any[] = [];
+
       // Usar tu util de paginación existente
       const paginatedResult = await PaginationUtil.paginate(
-        this.teamUserRepository,
-        {
-          where: {
-            teamId: team.id,
-            userId: Not(user.id)
-          },
-          relations: { user: true }
-        },
+        this.userRepository,{where: { id: Not(user.id),myTeams: {team:{id:team.id},isActive:true}, },relations:{myTeams:{role:true}}},
         { page, limit }
       );
+      const recalculatedData =  paginatedResult.data.map(member => {
+        return plainToInstance(meRespondeRole,{...member,role:member.myTeams[0].role.name},{excludeExtraneousValues: true})
+      })  
 
       return {
         message: 'Members retrieved successfully',
-        members: paginatedResult.data,
+        members: recalculatedData,
         meta: paginatedResult.meta
       };
       

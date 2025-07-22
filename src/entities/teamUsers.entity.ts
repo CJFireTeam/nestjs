@@ -8,6 +8,7 @@ export interface ITeamUserEntity {
     joinedAt: Date;
     isActive: boolean;
     isPrincipal: boolean;
+    role: RolesEntity;
 }
 
 @Entity('teams_users', { comment: 'Table for storing team-user relationships' })

@@ -11,4 +11,9 @@ export class meResponseDto {
   
   @Expose()
   email: string;
+  
+}
+export class meRespondeRole extends meResponseDto {
+  @Expose()
+  role: string;
 }
