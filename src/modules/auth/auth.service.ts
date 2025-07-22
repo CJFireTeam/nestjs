@@ -25,6 +25,8 @@ import { ChangeTeamDto } from './dto/changeTeam.dto';
 import { IModulesEntity, ModulesEntity } from 'src/entities/modules.entity';
 import { UserModuleEntity } from 'src/entities/userModules.entity';
 import { TeamModuleEntity } from 'src/entities/teamModules.entity';
+import { plainToInstance } from 'class-transformer';
+import { meResponseDto } from './dto/meResponse.dto';
 export interface moduleOutputI {
   name: string;
   icon: string;
@@ -232,7 +234,7 @@ export class AuthService {
   }
   // public async validateToken(token) {
   public async me(user: UserEntity) {
-    return user;
+    return plainToInstance(meResponseDto,user,{excludeExtraneousValues: true})
   }
   public async Modules() {
     // extend for premium modules

@@ -53,7 +53,7 @@ export class TeamService {
   }
 
 
-  async getMyMembers(user:UserEntity,team:TeamEntity) {
+  async   getMyMembers(user:UserEntity,team:TeamEntity) {
     const members =  await this.teamUserRepository.find({where:
       {
         teamId:team.id,
