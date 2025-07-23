@@ -16,4 +16,6 @@ export class meResponseDto {
 export class meRespondeRole extends meResponseDto {
   @Expose()
   role: string;
+  @Expose()
+  image:string | null;
 }

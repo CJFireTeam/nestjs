@@ -21,6 +21,7 @@ export interface IUserEntity {
   myTeams: ITeamUserEntity[];
   otps: OtpEntity[];
   userModules: any[];
+  image?: string;
 }
 
 @Entity({name: 'users',comment: 'Table for storing user information'})
@@ -40,6 +41,8 @@ export class UserEntity implements IUserEntity {
     @Column()
     lastName: string
 
+    @Column({nullable:true})
+    image: string
     @Column({default:false})
     isActive: boolean
 
