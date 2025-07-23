@@ -37,4 +37,31 @@ export class TeamController {
   ) {
     return this.teamService.getMyMembers(req.user.me, req.team, page, limit);
   }
+
+  // Endpoint para obtener módulos disponibles (que el equipo NO tiene)
+  @Get('modules/available')
+  @UseGuards(JwtGuard, TeamGuard)
+  getAvailableModules(
+    @Request() req,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.teamService.getAvailableModules(
+      req.user.me,
+      req.team,
+      page,
+      limit,
+    );
+  }
+
+  // Endpoint para obtener módulos del equipo (que el equipo SÍ tiene)
+  @Get('modules')
+  @UseGuards(JwtGuard, TeamGuard)
+  getTeamModules(
+    @Request() req,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.teamService.getTeamModules(req.user.me, req.team, page, limit);
+  }
 }
