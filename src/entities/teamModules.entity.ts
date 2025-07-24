@@ -8,6 +8,7 @@ export interface ITeamModuleEntity {
   team: TeamEntity;
   module: IModulesEntity;
   addedAt: Date;
+  status: boolean;
 }
 
 @Entity('teams_modules', { comment: 'Table for storing team-module relationships' })
@@ -17,6 +18,9 @@ export class TeamModuleEntity implements ITeamModuleEntity {
 
   @PrimaryColumn()
   moduleId: number;
+  
+  @Column({default: true})
+  status: boolean;
 
   @ManyToOne('teams', 'teams')
   @JoinColumn({ name: 'teamId' })
@@ -28,4 +32,5 @@ export class TeamModuleEntity implements ITeamModuleEntity {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   addedAt: Date;
+  
 }

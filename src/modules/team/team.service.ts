@@ -33,7 +33,7 @@ export class TeamService {
     private readonly modulesRepository: Repository<ModulesEntity>,
     @Inject('TEAM_MODULES_REPOSITORY')
     private readonly teamModulesRepository: Repository<TeamModuleEntity>,
-  ) {}
+  ) { }
 
   async create(createTeamDto: CreateTeamDto, user: UserEntity) {
     try {
@@ -111,83 +111,44 @@ export class TeamService {
     }
   }
 
-  // Obtener todos los módulos que mi equipo NO tiene
-  async getAvailableModules(
-    user: UserEntity,
-    team: TeamEntity,
-    page: number = 1,
-    limit: number = 10,
-  ) {
-    try {
-      // Obtener los IDs de módulos que ya tiene el equipo
-      const teamModules = await this.teamModulesRepository.find({
-        where: { teamId: team.id },
-        select: ['moduleId'],
-      });
-
-      const teamModuleIds = teamModules.map((tm) => tm.moduleId);
-
-      // Construir la condición WHERE para excluir los módulos del equipo
-      const whereCondition: any = {
-        status: true, // Solo módulos activos
-        forTeams: true, // Solo módulos para equipos
-      };
-
-      // Si el equipo tiene módulos, excluirlos
-      if (teamModuleIds.length > 0) {
-        whereCondition.id = Not(In(teamModuleIds));
-      }
-
-      // Usar util de paginación existente
-      const paginatedResult = await PaginationUtil.paginate(
-        this.modulesRepository,
-        {
-          where: whereCondition,
-          order: { name: 'ASC' },
-        },
-        { page, limit },
-      );
-
-      return {
-        message: 'Available modules retrieved successfully',
-        modules: paginatedResult.data,
-        meta: paginatedResult.meta,
-      };
-    } catch (error) {
-      throw new BadRequestException(
-        'Error getting available modules: ' + error.message,
-      );
-    }
-  }
-
   // Obtener todos los módulos que mi equipo SÍ tiene
   async getTeamModules(
     user: UserEntity,
     team: TeamEntity,
+    installed?: boolean,
     page: number = 1,
     limit: number = 10,
   ) {
     try {
+      let whereCondition: any;
+      if (installed) {
+        whereCondition = {
+          teams: { teamId: team.id, status: true },
+        }
+      }
+      else {
+        whereCondition = {
+          forTeams: true,
+        }
+      }
       // Usar tu util de paginación con join
       const paginatedResult = await PaginationUtil.paginate(
-        this.teamModulesRepository,
+        this.modulesRepository,
         {
-          where: { teamId: team.id },
-          relations: { module: true },
-          order: { addedAt: 'DESC' },
+          select: ['id', 'name', 'description', 'icon'],
+          where: whereCondition
         },
+        // this.teamModulesRepository,
+        // {
+        //   where: { teamId: team.id },
+        //   relations: { module: true },
+        //   order: { addedAt: 'DESC' },
+        // },
         { page, limit },
       );
-
-      // Mapear para devolver solo la información del módulo con fecha de agregado
-      const teamModulesData = paginatedResult.data.map((tm) => ({
-        ...tm.module,
-        addedAt: tm.addedAt,
-      }));
-
       return {
         message: 'Team modules retrieved successfully',
-        modules: teamModulesData,
+        data: paginatedResult.data,
         meta: paginatedResult.meta,
       };
     } catch (error) {
