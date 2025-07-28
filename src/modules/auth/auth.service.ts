@@ -27,6 +27,8 @@ import { UserModuleEntity } from 'src/entities/userModules.entity';
 import { TeamModuleEntity } from 'src/entities/teamModules.entity';
 import { plainToInstance } from 'class-transformer';
 import { meResponseDto } from './dto/meResponse.dto';
+import { RegisterWhitOwner } from './dto/register-whit-owner.dto';
+import randomatic from 'randomatic';
 export interface moduleOutputI {
   name: string;
   icon: string;
@@ -55,7 +57,8 @@ export class AuthService {
     private readonly moduleRepository: Repository<ModulesEntity>,
     @Inject('MODULE_USER_REPOSITORY')
     private readonly userModuleRepository: Repository<UserModuleEntity>,
-    @Inject('TEAM_MODULES_REPOSITORY') private readonly teamModules: Repository<TeamModuleEntity>
+    @Inject('TEAM_MODULES_REPOSITORY')
+    private readonly teamModules: Repository<TeamModuleEntity>,
   ) {
     this.getDefaultRole();
   }
@@ -71,6 +74,45 @@ export class AuthService {
       this.defaultRole = defaultRole;
     }
     return this.defaultRole;
+  }
+
+  async registerWhitOwner(dto: RegisterWhitOwner) {
+    if (dto.teamUrl) {
+      const url = await this.teamRepository.findOne({
+        where: { teamUrl: dto.teamUrl },
+      });
+      if (!url) {
+        throw new HttpException('Team not found', 404);
+      }
+    }
+    if (await this.userRepository.findOne({ where: { email: dto.email } }))
+      throw new BadRequestException();
+
+    const newPassword = await randomatic('*',12);
+    
+    const passwordHash = await this.encryptUtil.hashPassword(newPassword); 
+    const user = this.userRepository.create({ ...dto, password: passwordHash });
+    const userCreated = await this.userRepository.save(user);
+    const otp = await this.otpRepository.save({
+      code: await this.OtpUtil.Generate('numeric'),
+      user: userCreated,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
+
+    // DEVICE CONFIGURATION
+
+    const link =
+      this.configService.get<string>('BACK_URL') +
+      '/auth/confirm/' +
+      otp.code +
+      '/' +
+      +userCreated.id +
+      '?callback?' + passwordHash +
+      this.configService.get<string>('FRONT_URL') +
+      '&confirmed=true';
+
+    // SENDEMAIL
+    return { message: 'User registered successfully' };
   }
 
   async register(dto: RegisterAuthDto) {
@@ -234,7 +276,9 @@ export class AuthService {
   }
   // public async validateToken(token) {
   public async me(user: UserEntity) {
-    return plainToInstance(meResponseDto,user,{excludeExtraneousValues: true})
+    return plainToInstance(meResponseDto, user, {
+      excludeExtraneousValues: true,
+    });
   }
   public async Modules() {
     // extend for premium modules
@@ -280,19 +324,32 @@ export class AuthService {
     const myTeams: any[] = [];
     const teamUsers = await this.teamUserRepository.find({
       where: { userId: user.id, isActive: true },
-      relations: { team: true,role:true },
+      relations: { team: true, role: true },
     });
-    teamUsers.map((tu) => myTeams.push({...tu.team, isPrincipal: tu.isPrincipal,role:tu.role.name}) || []);
+    teamUsers.map(
+      (tu) =>
+        myTeams.push({
+          ...tu.team,
+          isPrincipal: tu.isPrincipal,
+          role: tu.role.name,
+        }) || [],
+    );
 
     return myTeams;
   }
-  async getMyTeamsModules(user:UserEntity) {
-      const teamUsers = await this.teamUserRepository.findOne({
-        where: { userId: user.id, isActive: true,isPrincipal: true },
-        relations: { team: true },
+  async getMyTeamsModules(user: UserEntity) {
+    const teamUsers = await this.teamUserRepository.findOne({
+      where: { userId: user.id, isActive: true, isPrincipal: true },
+      relations: { team: true },
     });
     if (!teamUsers) throw new BadRequestException('Principal no encontrada');
-    return (await this.teamModules.find({where: {teamId:teamUsers.teamId},relations:{module:true},select: {module:true}})).map(e => e.module)
+    return (
+      await this.teamModules.find({
+        where: { teamId: teamUsers.teamId },
+        relations: { module: true },
+        select: { module: true },
+      })
+    ).map((e) => e.module);
   }
   async JoinToTeam(dto: JoinToTeam, user: UserEntity) {
     const teamSearch = await this.teamRepository.findOne({
@@ -319,6 +376,23 @@ export class AuthService {
     };
   }
 
+  async getRoles() {
+    const roles: any[] = [];
+    const dataRoles = await this.roleRepository.find({
+      where: { status: true },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+      },
+    });
+    if(!dataRoles || dataRoles.length === 0) {
+      throw new BadRequestException('No roles found');  
+    }
+    roles.push(...dataRoles);
+    return roles;
+  }
+
   async ChangeTeam(dto: ChangeTeamDto, user: UserEntity) {
     const teamSearch = await this.teamRepository.findOne({
       where: { inviteLink: dto.uuid, status: true },
@@ -343,7 +417,7 @@ export class AuthService {
     };
   }
 
-  async logout(token: string,user: UserEntity, ) {
+  async logout(token: string, user: UserEntity) {
     // 1) validaciones básicas
     if (!token) {
       throw new BadRequestException('No token provided to invalidate');

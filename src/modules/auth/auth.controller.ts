@@ -22,6 +22,7 @@ import { JwtGuard } from 'src/guard/jwt/jwt.guard';
 import { RoleAuthDto } from './dto/role-auth.dto';
 import { JoinToTeam } from './dto/joinToTeam.dto';
 import { ChangeTeamDto } from './dto/changeTeam.dto';
+import { RegisterWhitOwner } from './dto/register-whit-owner.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -30,6 +31,11 @@ export class AuthController {
   @Post('register')
   register(@Body() dto: RegisterAuthDto) {
     return this.authService.register(dto);
+  }
+
+  @Post('Owner/register')
+  registerWhitOwner(@Body() dto: RegisterWhitOwner) {
+    return this.authService.registerWhitOwner(dto);
   }
 
   @Get('confirm/:otp/:id')
@@ -86,6 +92,12 @@ export class AuthController {
   @Post('role')
   roleChange(@Request() req, @Body() dto: RoleAuthDto) {
     return this.authService.roleChange(req.user.me, dto.roleId);
+  }
+
+  @UseGuards(JwtGuard) // JwtGuard para autorización con token
+  @Get('roles')
+  getRoles(@Request() req) {
+    return this.authService.getRoles();
   }
 
   @UseGuards(JwtGuard) // JwtGuard para autorización con token
